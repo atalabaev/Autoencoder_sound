@@ -1,69 +1,39 @@
-# Two-Stage Autoencoder for Audio Reconstruction
+#  Bottle Detector (YOLOv8)
 
-## 1. Постановка задачи
-Цель работы — разработка и исследование двуступенчатого автоэнкодера для сжатия и восстановления аудиосигналов.
+Учебный проект по компьютерному зрению: детекция бутылок на изображениях и в реальном времени с веб-камеры с использованием **YOLOv8**.
 
-Задачи:
-- реализовать архитектуру двуступенчатого автоэнкодера;
-- обучить модель на реальных аудиоданных;
-- выполнить реконструкцию аудиосигнала;
-- проанализировать качество восстановления.
+Проект показывает полный ML-цикл:
+> датасет → обучение → инференс → аналитика.
 
----
 
-## 2. Данные
-Используются аудиофайлы в формате WAV.
+## Dataset
 
-Параметры данных:
-- моно-сигнал;
-- частота дискретизации — 16 000 Гц;
-- длительность фрагмента — 1–2 секунды.
+Датасет хранится отдельно и доступен по ссылке:
 
-Перед подачей в модель сигнал:
-- ресэмплируется;
-- приводится к фиксированной длине (padding / обрезка).
+https://drive.google.com/file/d/1R3vZ6hUXyu7PUPbZMe5ifn2F-YubBeB6/view?usp=sharing
 
----
+После распаковки структура должна быть:
+out/data/images/{train,val,test}
+out/data/labels/{train,val,test}
 
-## 3. Архитектура модели
-Модель состоит из двух автоэнкодеров.
-
-Первая ступень выполняет сжатие исходного сигнала в латентное пространство меньшей размерности.
-
-Вторая ступень выполняет дополнительное сжатие латентного представления первой ступени.
-
-Схема:
-Вход → AE1 → Латент1 → AE2 → Латент2 → Декодирование → Выход
-
----
-
-## 4. Функция потерь
-Используется среднеквадратичная ошибка (MSE):
-
-L = MSE(x, x̂₁) + MSE(x, x̂₂)
-
-где:
-- x — исходный сигнал,
-- x̂₁ — реконструкция первой ступени,
-- x̂₂ — реконструкция второй ступени.
-
----
-
-## 5. Обучение
-Обучение выполняется оптимизатором Adam.
-
-Пример запуска:
+##  Установка
 
 ```bash
-python3 main.py --mode train --epochs 50 --latent-dim-1 512 --latent-dim-2 128 --max-duration-sec 2.0
-После обучения модель используется для восстановления аудиофайла:
-python3 main.py --mode reconstruct --checkpoint checkpoints/checkpoint_epoch_50.pth --input-wav audio_data/test/sample1.wav --output-wav reconstructed.wav --latent-dim-1 512 --latent-dim-2 128 --max-duration-sec 2.0
-Модель демонстрирует способность восстанавливать форму аудиосигнала.
-Качество реконструкции повышается при увеличении числа эпох и размерности латентных пространств.
-Используемые технологии
-Python
-PyTorch
-TorchAudio
-NumPy
-SoundFile
-Jupyter Notebook
+git clone https://github.com/atalabaev/bottle-detector.git
+cd bottle-detector
+
+python3 -m venv venv
+source venv/bin/activate
+
+pip install -r requirements.txt
+
+ Обучение
+python3 src/train_yolo.py --data out/data/bottle.yaml --model yolov8s.pt --epochs 30 --batch 8
+После обучения:
+cp runs/train/<run_name>/weights/best.pt models/best.pt
+ Детекция с камеры (real-time)
+python3 camera_infer_improved.py --weights models/best.pt --camera 0 --conf 0.05
+Клавиши:
+•	s — сохранить кадр
+•	q / Esc — выход
+Все детекции сохраняются в detection_log.csv.
